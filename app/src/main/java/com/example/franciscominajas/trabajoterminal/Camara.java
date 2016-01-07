@@ -99,10 +99,10 @@ public class Camara implements SurfaceHolder.Callback, Camera.PreviewCallback
         camara = null;
     }
 
-    public Imagen procesamientoImagen(int Ancho, int Alto, Imagen imagene)
+    public boolean procesamientoImagen(int Ancho, int Alto, Imagen imagene)
     {
         //zona de procesamiento
-        return imagene;
+        return true;
     }
 
     //hilo
@@ -113,7 +113,7 @@ public class Camara implements SurfaceHolder.Callback, Camera.PreviewCallback
         {
             Log.i("Prototipo_1","Procesando");
             procesando=true;
-            image=procesamientoImagen(ancho, alto, image);
+            procesamientoImagen(ancho, alto, image);
 
             bitmap.setPixels(image.getPixeles(), 0, ancho, 0, 0, ancho, alto);
 
