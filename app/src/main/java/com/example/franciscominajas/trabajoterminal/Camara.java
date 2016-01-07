@@ -115,7 +115,7 @@ public class Camara implements SurfaceHolder.Callback, Camera.PreviewCallback
         {
             Log.i("Prototipo_1","Procesando");
             procesando=true;
-            imagen=procesamientoImagen(ancho, alto, imagen);
+            procesamientoImagen(ancho, alto, imagen);
 
             bitmap.setPixels(imagen.getPixeles(), 0, ancho, 0, 0, ancho, alto);
 
