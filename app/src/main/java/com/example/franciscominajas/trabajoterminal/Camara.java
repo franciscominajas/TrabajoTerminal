@@ -22,9 +22,8 @@ public class Camara implements SurfaceHolder.Callback, Camera.PreviewCallback
     private Camera camara = null;
     private ImageView previzualizacionCamara = null;
     private Bitmap bitmap = null;
-    private Imagen imagen = null;
-    //private int[] pixeles = null;
-    //private byte[] informacionFrames = null;
+    private int[] pixeles = null;
+    private byte[] informacionFrames = null;
     private int formatoImagen;
     private int ancho;
     private int alto;
@@ -41,7 +40,7 @@ public class Camara implements SurfaceHolder.Callback, Camera.PreviewCallback
         //Bitmap.Config.ARGB_8888 Cada pixel almacena 4 bytes.
         bitmap = Bitmap.createBitmap(ancho, alto, Bitmap.Config.ARGB_8888);
         //creamos un arreglo donde almacenaremos todos los pixeles.
-        imagen.setPixeles(new int[alto*ancho]);
+        pixeles = new int[alto*ancho];
     }
 
     public void onPreviewFrame(byte[] arg0, Camera arg1)
@@ -53,7 +52,7 @@ public class Camara implements SurfaceHolder.Callback, Camera.PreviewCallback
             //solamente aceptamos el formato NV21(YUV420).
             if(!procesando)
             {
-                imagen.setDatos(arg0);
+                informacionFrames=arg0;
                 handler.post(DoImageProcessing);
             }
         }
@@ -99,7 +98,7 @@ public class Camara implements SurfaceHolder.Callback, Camera.PreviewCallback
         camara = null;
     }
 
-    public boolean procesamientoImagen(int Ancho, int Alto, Imagen image)
+    public boolean procesamientoImagen(int Ancho, int Alto, byte[] NV21FrameData, int[] pixels)
     {
         //zona de procesamiento
         return true;
@@ -113,9 +112,9 @@ public class Camara implements SurfaceHolder.Callback, Camera.PreviewCallback
         {
             Log.i("Prototipo_1","Procesando");
             procesando=true;
-            procesamientoImagen(ancho, alto, imagen);
+            procesamientoImagen(ancho, alto, informacionFrames, pixeles);
 
-            bitmap.setPixels(imagen.getPixeles(), 0, ancho, 0, 0, ancho, alto);
+            bitmap.setPixels(pixeles, 0, ancho, 0, 0, ancho, alto);
 
             previzualizacionCamara.setImageBitmap(bitmap);
             procesando = true;
