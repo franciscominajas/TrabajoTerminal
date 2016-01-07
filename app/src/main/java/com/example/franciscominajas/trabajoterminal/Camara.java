@@ -99,12 +99,10 @@ public class Camara implements SurfaceHolder.Callback, Camera.PreviewCallback
         camara = null;
     }
 
-    public Imagen procesamientoImagen(int Ancho, int Alto, Imagen image)
+    public boolean procesamientoImagen(int Ancho, int Alto, Imagen image)
     {
         //zona de procesamiento
-        Imagen imagene=new Imagen();
-        imagene=image;
-        return imagene;
+        return true;
     }
 
     //hilo
