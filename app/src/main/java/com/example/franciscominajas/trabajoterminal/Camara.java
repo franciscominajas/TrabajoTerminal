@@ -11,6 +11,12 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 import android.widget.ImageView;
 
+import org.opencv.android.Utils;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
+
 import java.io.IOException;
 
 /**
@@ -28,6 +34,8 @@ public class Camara implements SurfaceHolder.Callback, Camera.PreviewCallback
     private int ancho;
     private int alto;
     private boolean procesando = false;
+    //variables de opencv
+    Mat canny=null;
 
     //inicializar el manipulador de procesos
     Handler handler = new Handler(Looper.getMainLooper());
@@ -101,6 +109,23 @@ public class Camara implements SurfaceHolder.Callback, Camera.PreviewCallback
     public boolean procesamientoImagen(int Ancho, int Alto, byte[] NV21FrameData, int[] pixels)
     {
         //zona de procesamiento
+        if(canny==null)
+        {
+            canny=new Mat(alto,ancho, CvType.CV_8UC1);
+        }
+        Mat entrada=new Mat(alto, ancho, CvType.CV_8UC1);
+        Mat gris=new Mat(alto, ancho, CvType.CV_8UC1);
+        Mat blur=new Mat(alto, ancho, CvType.CV_8UC1);
+        Mat resultado=new Mat(alto, ancho, CvType.CV_8UC4);
+
+        Utils.bitmapToMat(this.bitmap, entrada);
+        Imgproc.cvtColor(entrada, gris, Imgproc.COLOR_RGB2GRAY);
+        int min_threshold=80;
+        int ratio = 100;
+        Size s = new Size(3,3);
+        Imgproc.blur(gris, blur, s);
+        Imgproc.Canny(blur, resultado, min_threshold, min_threshold * ratio);
+        Utils.matToBitmap(resultado, this.bitmap);
         return true;
     }
 
