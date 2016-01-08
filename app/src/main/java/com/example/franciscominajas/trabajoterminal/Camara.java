@@ -14,10 +14,12 @@ import android.widget.ImageView;
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * Created by FRANCISCOMINAJAS on 03/01/2016.
@@ -109,23 +111,28 @@ public class Camara implements SurfaceHolder.Callback, Camera.PreviewCallback
     public boolean procesamientoImagen(int Ancho, int Alto, byte[] NV21FrameData, int[] pixels)
     {
         //zona de procesamiento
+        byte[] datos=NV21FrameData;
+        int[] pixeles2=pixels;
         if(canny==null)
         {
             canny=new Mat(alto,ancho, CvType.CV_8UC1);
         }
-        Mat entrada=new Mat(alto, ancho, CvType.CV_8UC1);
-        Mat gris=new Mat(alto, ancho, CvType.CV_8UC1);
-        Mat blur=new Mat(alto, ancho, CvType.CV_8UC1);
-        Mat resultado=new Mat(alto, ancho, CvType.CV_8UC4);
+        Scalar escalar=new Scalar(toDouble(datos));
+        Scalar escalar2=new Scalar();
 
-        Utils.bitmapToMat(this.bitmap, entrada);
+        Mat gris=new Mat(alto, ancho, CvType.CV_8UC1, escalar);
+        Mat resultado=new Mat(alto, ancho, CvType.CV_8UC4, escalar2);
+
+        Mat blur=new Mat(alto, ancho, CvType.CV_8UC1);
+
+        /*Utils.bitmapToMat(this.bitmap, entrada);
         Imgproc.cvtColor(entrada, gris, Imgproc.COLOR_RGB2GRAY);
         int min_threshold=80;
         int ratio = 100;
         Size s = new Size(3,3);
         Imgproc.blur(gris, blur, s);
         Imgproc.Canny(blur, resultado, min_threshold, min_threshold * ratio);
-        Utils.matToBitmap(resultado, this.bitmap);
+        Utils.matToBitmap(resultado, this.bitmap);*/
         return true;
     }
 
@@ -151,5 +158,35 @@ public class Camara implements SurfaceHolder.Callback, Camera.PreviewCallback
         Matrix matrix = new Matrix();
         matrix.postRotate(angle);
         return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
+    }
+
+    public static byte[] toByteArray(double value) {
+        byte[] bytes = new byte[8];
+        ByteBuffer.wrap(bytes).putDouble(value);
+        return bytes;
+    }
+
+    public static double toDouble(byte[] bytes) {
+        return ByteBuffer.wrap(bytes).getDouble();
+    }
+
+    public static int[] aEntero(Double[] numeros)
+    {
+        int result[]= new int[numeros.length];
+        for( int i =0 ; i<numeros.length ; i++)
+        {
+            result[i]=Integer.parseInt(numeros[i].toString());
+        }
+        return result;
+    }
+
+    public static Double[] aDouble(int[] numeros)
+    {
+        Double result[]= new Double[numeros.length];
+        for( int i =0 ; i<numeros.length ; i++)
+        {
+            result[i]=Double.parseDouble(""+numeros[i]);
+        }
+        return result;
     }
 }
