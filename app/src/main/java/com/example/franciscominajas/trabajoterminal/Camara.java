@@ -1,6 +1,7 @@
 package com.example.franciscominajas.trabajoterminal;
 
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.hardware.Camera;
@@ -10,6 +11,7 @@ import android.os.Looper;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
@@ -18,8 +20,12 @@ import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.sql.NClob;
+import java.util.Map;
 
 /**
  * Created by FRANCISCOMINAJAS on 03/01/2016.
@@ -37,7 +43,7 @@ public class Camara implements SurfaceHolder.Callback, Camera.PreviewCallback
     private int alto;
     private boolean procesando = false;
     //variables de opencv
-    Mat canny=null;
+    Mat mRgba = null;
 
     //inicializar el manipulador de procesos
     Handler handler = new Handler(Looper.getMainLooper());
@@ -110,29 +116,6 @@ public class Camara implements SurfaceHolder.Callback, Camera.PreviewCallback
 
     public boolean procesamientoImagen(int Ancho, int Alto, byte[] NV21FrameData, int[] pixels)
     {
-        //zona de procesamiento
-        byte[] datos=NV21FrameData;
-        int[] pixeles2=pixels;
-        if(canny==null)
-        {
-            canny=new Mat(alto,ancho, CvType.CV_8UC1);
-        }
-        Scalar escalar=new Scalar(toDouble(datos));
-        Scalar escalar2=new Scalar();
-
-        Mat gris=new Mat(alto, ancho, CvType.CV_8UC1, escalar);
-        Mat resultado=new Mat(alto, ancho, CvType.CV_8UC4, escalar2);
-
-        Mat blur=new Mat(alto, ancho, CvType.CV_8UC1);
-
-        /*Utils.bitmapToMat(this.bitmap, entrada);
-        Imgproc.cvtColor(entrada, gris, Imgproc.COLOR_RGB2GRAY);
-        int min_threshold=80;
-        int ratio = 100;
-        Size s = new Size(3,3);
-        Imgproc.blur(gris, blur, s);
-        Imgproc.Canny(blur, resultado, min_threshold, min_threshold * ratio);
-        Utils.matToBitmap(resultado, this.bitmap);*/
         return true;
     }
 
@@ -142,51 +125,79 @@ public class Camara implements SurfaceHolder.Callback, Camera.PreviewCallback
         @Override
         public void run()
         {
-            Log.i("Prototipo_1","Procesando");
+            //Toast.makeText(null, "Procesando", Toast.LENGTH_LONG).show();
             procesando=true;
-            procesamientoImagen(ancho, alto, informacionFrames, pixeles);
+            //procesamientoImagen(ancho, alto, informacionFrames, pixeles);
 
+            //bitmap=convertirAGrises(bitmap);
+            //bitmap=negroBlanco(bitmap);
             bitmap.setPixels(pixeles, 0, ancho, 0, 0, ancho, alto);
 
             previzualizacionCamara.setImageBitmap(bitmap);
-            procesando = true;
+            procesando = false;
         }
     };
 
-    public static Bitmap RotateBitmap(Bitmap source, float angle)
+    public Bitmap convertirAGrises(Bitmap bitmap)
     {
-        Matrix matrix = new Matrix();
-        matrix.postRotate(angle);
-        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
+        //zona de procesamiento de la imagen
+        mRgba = new Mat(bitmap.getHeight(), bitmap.getWidth(), CvType.CV_8UC4);
+        Utils.bitmapToMat(bitmap, mRgba);
+        Imgproc.cvtColor(mRgba, mRgba, Imgproc.COLOR_RGB2GRAY);
+        Utils.matToBitmap(mRgba, bitmap);
+        //fin de la zona de procesamiento de la imagen
+        //Toast.makeText(getApplicationContext(), "COLORES IGUAlES: "+rojo+" "+verde+" "+azul, Toast.LENGTH_LONG).show();
+        return bitmap;
     }
 
-    public static byte[] toByteArray(double value) {
-        byte[] bytes = new byte[8];
-        ByteBuffer.wrap(bytes).putDouble(value);
-        return bytes;
-    }
-
-    public static double toDouble(byte[] bytes) {
-        return ByteBuffer.wrap(bytes).getDouble();
-    }
-
-    public static int[] aEntero(Double[] numeros)
+    public Bitmap negroBlanco(Bitmap bitmap)
     {
-        int result[]= new int[numeros.length];
-        for( int i =0 ; i<numeros.length ; i++)
-        {
-            result[i]=Integer.parseInt(numeros[i].toString());
-        }
-        return result;
+        //zona de procesamiento de la imagen
+        mRgba = new Mat(bitmap.getHeight(), bitmap.getWidth(), CvType.CV_8UC4);
+        Utils.bitmapToMat(bitmap, mRgba);
+        Mat C = mRgba.clone();
+        Size sizeA = mRgba.size();
+        double suma=0, promedio=0;
+        for (int i = 0; i < sizeA.height; i++)
+            for (int j = 0; j < sizeA.width; j++) {
+                double[] data = mRgba.get(i, j);
+                data[0] = data[0];
+                data[1] = data[1];
+                data[2] = data[2];
+                suma+=data[2];
+                C.put(i, j, data);
+            }
+        promedio=suma/(sizeA.height*sizeA.width);
+        //Toast.makeText(getApplicationContext(), "COLORES IGUAlES: "+promedio, Toast.LENGTH_LONG).show();
+        for (int i = 0; i < sizeA.height; i++)
+            for (int j = 0; j < sizeA.width; j++) {
+                double[] data = mRgba.get(i, j);
+                if(data[0]<promedio)
+                {
+                    data[0] = 0;
+                    data[1] = 0;
+                    data[2] = 0;
+                }
+                else
+                {
+                    data[0] = 255;
+                    data[1] = 255;
+                    data[2] = 255;
+                }
+                C.put(i, j, data);
+            }
+        Utils.matToBitmap(C, bitmap);
+        return bitmap;
     }
 
-    public static Double[] aDouble(int[] numeros)
+    public Bitmap convertirBlur(Bitmap bitmap)
     {
-        Double result[]= new Double[numeros.length];
-        for( int i =0 ; i<numeros.length ; i++)
-        {
-            result[i]=Double.parseDouble(""+numeros[i]);
-        }
-        return result;
+        //zona de procesamiento de la imagen
+        mRgba = new Mat(bitmap.getHeight(), bitmap.getWidth(), CvType.CV_8UC4);
+        Utils.bitmapToMat(bitmap, mRgba);
+        Imgproc.medianBlur(mRgba, mRgba, 51);
+        Utils.matToBitmap(mRgba, bitmap);
+        //fin de la zona de procesamiento de la imagen
+        return bitmap;
     }
 }
