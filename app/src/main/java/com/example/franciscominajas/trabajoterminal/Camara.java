@@ -4,6 +4,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
+import android.graphics.Rect;
+import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.hardware.Camera.Parameters;
 import android.os.Handler;
@@ -39,8 +41,8 @@ public class Camara implements SurfaceHolder.Callback, Camera.PreviewCallback
     private int[] pixeles = null;
     private byte[] informacionFrames = null;
     private int formatoImagen;
-    private int ancho;
-    private int alto;
+    private int ancho=480;
+    private int alto=640;
     private boolean procesando = false;
     //variables de opencv
     Mat mRgba = null;
@@ -63,7 +65,7 @@ public class Camara implements SurfaceHolder.Callback, Camera.PreviewCallback
     {
         //en modo de previsualizacion, cada frame sera colocado aqui
         //ImageFormat.NV21 YCrCb formato utilizado para las imágenes, que utiliza el formato de codificación NV21.
-        if(formatoImagen == ImageFormat.NV21)
+        /*if(formatoImagen == ImageFormat.NV21)
         {
             //solamente aceptamos el formato NV21(YUV420).
             if(!procesando)
@@ -71,8 +73,27 @@ public class Camara implements SurfaceHolder.Callback, Camera.PreviewCallback
                 informacionFrames=arg0;
                 handler.post(DoImageProcessing);
             }
+        }*/
+        Camera.Parameters parameters = arg1.getParameters();
+        //int width = parameters.getPreviewSize().width;
+        //int height = parameters.getPreviewSize().height;
+
+        YuvImage yuv = new YuvImage(arg0, parameters.getPreviewFormat(), ancho, alto, null);
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        yuv.compressToJpeg(new Rect(0, 0, ancho, alto), 50, out);
+
+        //rotation
+        Matrix matrix=new Matrix();
+        matrix.postRotate(90);
+        byte[] bytes = out.toByteArray();
+
+        bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+        bitmap = Bitmap.createBitmap(bitmap, 0, 0,ancho, alto, matrix, true);
+        //bitmap=convertirAGrises(bitmap);
+        //bitmap=negroBlanco(bitmap);
+        handler.post(DoImageProcessing);
         }
-    }
 
     public void onPause()
     {
@@ -125,7 +146,8 @@ public class Camara implements SurfaceHolder.Callback, Camera.PreviewCallback
         @Override
         public void run()
         {
-            //Toast.makeText(null, "Procesando", Toast.LENGTH_LONG).show();
+            previzualizacionCamara.setImageBitmap(bitmap);
+            /*//Toast.makeText(null, "Procesando", Toast.LENGTH_LONG).show();
             procesando=true;
             //procesamientoImagen(ancho, alto, informacionFrames, pixeles);
 
@@ -134,14 +156,15 @@ public class Camara implements SurfaceHolder.Callback, Camera.PreviewCallback
             bitmap.setPixels(pixeles, 0, ancho, 0, 0, ancho, alto);
 
             previzualizacionCamara.setImageBitmap(bitmap);
-            procesando = false;
+            procesando = false;*/
+
         }
     };
 
     public Bitmap convertirAGrises(Bitmap bitmap)
     {
         //zona de procesamiento de la imagen
-        mRgba = new Mat(bitmap.getHeight(), bitmap.getWidth(), CvType.CV_8UC4);
+        mRgba = new Mat(bitmap.getHeight(), bitmap.getWidth(), CvType.CV_8UC1);
         Utils.bitmapToMat(bitmap, mRgba);
         Imgproc.cvtColor(mRgba, mRgba, Imgproc.COLOR_RGB2GRAY);
         Utils.matToBitmap(mRgba, bitmap);
