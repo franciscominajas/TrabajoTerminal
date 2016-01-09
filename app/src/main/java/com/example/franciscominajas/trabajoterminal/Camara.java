@@ -42,7 +42,7 @@ public class Camara implements SurfaceHolder.Callback, Camera.PreviewCallback
     private byte[] informacionFrames = null;
     private int formatoImagen;
     private int ancho=480;
-    private int alto=640;
+    private int alto=480;
     private boolean procesando = false;
     //variables de opencv
     Mat mRgba = null;
@@ -88,11 +88,13 @@ public class Camara implements SurfaceHolder.Callback, Camera.PreviewCallback
         matrix.postRotate(90);
         byte[] bytes = out.toByteArray();
 
-        bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-        bitmap = Bitmap.createBitmap(bitmap, 0, 0,ancho, alto, matrix, true);
+        Bitmap bitmaps = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+        Bitmap bitmapa = Bitmap.createBitmap(bitmaps, 0, 0, ancho, alto, matrix, true);
+        this.bitmap=bitmapa;
         //bitmap=convertirAGrises(bitmap);
         //bitmap=negroBlanco(bitmap);
-        handler.post(DoImageProcessing);
+        previzualizacionCamara.setImageBitmap(bitmapa);
+        //handler.post(DoImageProcessing);
         }
 
     public void onPause()
